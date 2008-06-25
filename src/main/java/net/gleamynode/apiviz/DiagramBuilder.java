@@ -60,6 +60,7 @@ public class DiagramBuilder {
     private final RootDoc root;
     private final String packagePrefix;
     private final Set<Doc> landmarks = new HashSet<Doc>();
+    private final Set<Doc> dimouts = new HashSet<Doc>();
     private final Map<String, Set<Doc>> groups = new HashMap<String, Set<Doc>>();
     private final Map<Doc, Set<Doc>> generalizations = new HashMap<Doc, Set<Doc>>();
     private final Map<Doc, Set<Doc>> realizations = new HashMap<Doc, Set<Doc>>();
@@ -70,6 +71,7 @@ public class DiagramBuilder {
     private final Set<String> seeAlsoRelationships = new HashSet<String>();
 
     private boolean useLandscapeView = true;
+    private boolean useAutoDimout = true;
     private boolean useAutoLandmark = true;
     private boolean useSeeTags = false;
 
@@ -99,6 +101,14 @@ public class DiagramBuilder {
         useAutoLandmark = autoLandmark;
     }
 
+    public boolean isUseAutoDimout() {
+        return useAutoDimout;
+    }
+
+    public void setUseAutoDimout(boolean useAutoDimout) {
+        this.useAutoDimout = useAutoDimout;
+    }
+
     public boolean isUseSeeTags() {
         return useSeeTags;
     }
@@ -123,6 +133,10 @@ public class DiagramBuilder {
         landmarks.add(node);
     }
 
+    public void addDimout(Doc node) {
+        dimouts.add(node);
+    }
+
     private void addClass(ClassDoc type, boolean addRelatedClasses) {
         if (type == null) {
             throw new NullPointerException("type");
@@ -145,9 +159,18 @@ public class DiagramBuilder {
 
         group.add(node);
 
-        if (useAutoLandmark) {
+        if (isUseAutoLandmark()) {
             if (node.tags(TAG_LANDMARK).length > 0) {
-                landmarks.add(node);
+                addLandmark(node);
+                return;
+            }
+        }
+
+        if (isUseAutoDimout()) {
+            if (node instanceof ProgramElementDoc) {
+                if (!((ProgramElementDoc) node).qualifiedName().startsWith(packagePrefix)) {
+                    addDimout(node);
+                }
             }
         }
     }
@@ -390,7 +413,9 @@ public class DiagramBuilder {
 
     private void renderPackage(StringBuilder buf, PackageDoc pkg) {
         String stereotype = getStereotype(pkg);
-        String color = getColor(pkg);
+        String fillColor = fillColor(pkg);
+        String lineColor = lineColor(pkg);
+        String fontColor = fontColor(pkg);
 
         buf.append(nodeId(pkg));
         buf.append(" [label=\"");
@@ -400,15 +425,21 @@ public class DiagramBuilder {
             buf.append("&#187;\\n");
         }
         buf.append(pkg.name());
-        buf.append("\", style=\"filled\", fillcolor=\"");
-        buf.append(color);
+        buf.append("\", style=\"filled\", color=\"");
+        buf.append(lineColor);
+        buf.append("\", fontcolor=\"");
+        buf.append(fontColor);
+        buf.append("\", fillcolor=\"");
+        buf.append(fillColor);
         buf.append("\"];");
         buf.append(NEWLINE);
     }
 
     private void renderClass(StringBuilder buf, ClassDoc type) {
         String stereotype = getStereotype(type);
-        String color = getColor(type);
+        String fillColor = fillColor(type);
+        String lineColor = lineColor(type);
+        String fontColor = fontColor(type);
 
         buf.append(nodeId(type));
         buf.append(" [label=\"");
@@ -424,8 +455,12 @@ public class DiagramBuilder {
             buf.append(ITALIC_FONT);
             buf.append("\"");
         }
-        buf.append(", style=\"filled\", fillcolor=\"");
-        buf.append(color);
+        buf.append(", style=\"filled\", color=\"");
+        buf.append(lineColor);
+        buf.append("\", fontcolor=\"");
+        buf.append(fontColor);
+        buf.append("\", fillcolor=\"");
+        buf.append(fillColor);
         buf.append("\"];");
         buf.append(NEWLINE);
     }
@@ -537,10 +572,26 @@ public class DiagramBuilder {
         }
     }
 
-    private String getColor(Doc doc) {
+    private String fillColor(Doc doc) {
         String color = "white";
         if (landmarks.contains(doc)) {
             color = "khaki1";
+        }
+        return color;
+    }
+
+    private String lineColor(Doc doc) {
+        String color = "black";
+        if (dimouts.contains(doc)) {
+            color = "gray";
+        }
+        return color;
+    }
+
+    private String fontColor(Doc doc) {
+        String color = "black";
+        if (dimouts.contains(doc)) {
+            color = "gray30";
         }
         return color;
     }
