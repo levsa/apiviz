@@ -50,6 +50,10 @@ public class Constant {
     public static final String TAG_LANDMARK = TAG_PREFIX + "landmark";
     /* apiviz.hidden */
     public static final String TAG_HIDDEN = TAG_PREFIX + "hidden";
+    /* apiviz.exclude <regex> */
+    public static final String TAG_EXCLUDE = TAG_PREFIX + "exclude";
+    /* apiviz.inherit */
+    public static final String TAG_INHERIT = TAG_PREFIX + "inherit";
 
     static {
         if(System.getProperty("os.name").toLowerCase().contains("windows")) {
