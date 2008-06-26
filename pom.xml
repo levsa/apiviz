@@ -8,7 +8,7 @@
 
   <name>APIviz</name>
   <description>
-    APIviz is a JavaDoc doclet which extends the Java standard doclet. It generates comprehensive UML class and package diagrams for quick understanding of the overall API.
+    APIviz is a JavaDoc doclet which extends the Java standard doclet.  It generates comprehensive UML-like class and package diagrams for quick understanding of the overall API structure.
   </description>
 
   <url>http://apiviz.googlecode.com/</url>
