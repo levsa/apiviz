@@ -558,7 +558,11 @@ public class ClassDocGraph {
         buf.append(getNodeId(pkg));
         buf.append(" [label=\"");
         buf.append(pkg.name().substring(prefixLen));
-        buf.append("\", style=\"filled\", fillcolor=\"");
+        buf.append("\", style=\"filled");
+        if (pkg.tags("@deprecated").length > 0) {
+            buf.append(",dotted");
+        }
+        buf.append("\", fillcolor=\"");
         buf.append(getFillColor(pkg));
         buf.append("\", href=\"");
         buf.append(href);
@@ -587,7 +591,11 @@ public class ClassDocGraph {
             buf.append(ITALIC_FONT);
             buf.append("\"");
         }
-        buf.append(", style=\"filled\", color=\"");
+        buf.append(", style=\"filled");
+        if (node.tags("@deprecated").length > 0) {
+            buf.append(",dotted");
+        }
+        buf.append("\", color=\"");
         buf.append(lineColor);
         buf.append("\", fontcolor=\"");
         buf.append(fontColor);
