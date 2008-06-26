@@ -47,7 +47,16 @@ public class ApiVizDoclet {
 
     public static boolean start(RootDoc root) {
         root = new ApiVizRootDoc(root);
-        Standard.start(root);
+        if (!Standard.start(root)) {
+            return false;
+        }
+
+        if (!Graphviz.isAvailable()) {
+            root.printWarning("Graphviz is not found in the system path.");
+            root.printWarning("Skipping diagram generation.");
+            return true;
+        }
+
         try {
             File outputDirectory = getOutputDirectory(root.options());
             ClassDocGraph graph = new ClassDocGraph(root);
@@ -56,7 +65,9 @@ public class ApiVizDoclet {
             generatePackageSummaries(root, graph, outputDirectory);
             generateClassDiagrams(root, graph, outputDirectory);
         } catch(Throwable t) {
-            root.printError("An error occurred during diagram generation:" + t.toString());
+            root.printError(
+                    "An error occurred during diagram generation: " +
+                    t.toString());
             t.printStackTrace();
             return false;
         }

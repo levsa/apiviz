@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
@@ -32,6 +33,56 @@ import java.io.Writer;
  *
  */
 public class Graphviz {
+
+    public static boolean isAvailable() {
+        ProcessBuilder pb = new ProcessBuilder("dot", "-V");
+        pb.redirectErrorStream(true);
+
+        Process p;
+        try {
+            p = pb.start();
+        } catch (IOException e) {
+            return false;
+        }
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(p.getInputStream()));
+        OutputStream out = p.getOutputStream();
+        try {
+            out.close();
+
+            String line = null;
+            while((line = in.readLine()) != null) {
+                if (line.indexOf("Graphviz") >= 0) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+                // Shouldn't happen.
+            }
+
+            try {
+                in.close();
+            } catch (IOException e) {
+                // Shouldn't happen.
+            }
+
+            for (;;) {
+                try {
+                    p.waitFor();
+                    break;
+                } catch (InterruptedException e) {
+                    // Ignore
+                }
+            }
+        }
+    }
 
     public static void writeImageAndMap(
             String diagram, File outputDirectory, String filename) throws IOException {
@@ -49,26 +100,26 @@ public class Graphviz {
         pb.redirectErrorStream(true);
 
         Process p = pb.start();
-        Writer writer = new OutputStreamWriter(p.getOutputStream(), "UTF-8");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(p.getInputStream()));
+        Writer out = new OutputStreamWriter(p.getOutputStream(), "UTF-8");
         try {
-            writer.write(diagram);
-            writer.close();
+            out.write(diagram);
+            out.close();
 
             String line = null;
-            while((line = reader.readLine()) != null) {
+            while((line = in.readLine()) != null) {
                 System.err.println(line);
             }
         } finally {
             try {
-                writer.close();
+                out.close();
             } catch (IOException e) {
                 // Shouldn't happen.
             }
 
             try {
-                reader.close();
+                in.close();
             } catch (IOException e) {
                 // Shouldn't happen.
             }
