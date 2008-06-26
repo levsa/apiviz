@@ -18,7 +18,7 @@
 package net.gleamynode.apiviz;
 
 /**
- * @author The APIViz Project (http://apiviz.googlecode.com/)
+ * @author The APIviz Project (http://apiviz.googlecode.com/)
  * @author Trustin Lee (http://gleamynode.net/)
  *
  * @version $Rev$, $Date$

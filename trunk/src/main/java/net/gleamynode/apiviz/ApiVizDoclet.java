@@ -34,7 +34,7 @@ import com.sun.javadoc.RootDoc;
 import com.sun.tools.doclets.standard.Standard;
 
 /**
- * @author The APIViz Project (netty@googlegroups.com)
+ * @author The APIviz Project (netty@googlegroups.com)
  * @author Trustin Lee (trustin@gmail.com)
  *
  * @version $Rev$, $Date$
