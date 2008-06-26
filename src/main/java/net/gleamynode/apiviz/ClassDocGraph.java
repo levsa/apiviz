@@ -53,10 +53,9 @@ public class ClassDocGraph {
     private final Map<ClassDoc, Set<Edge>> reversedEdges = new HashMap<ClassDoc, Set<Edge>>();
 
     public ClassDocGraph(RootDoc root) {
-        if (root == null) {
-            throw new NullPointerException("root");
-        }
         this.root = root;
+
+        root.printNotice("Building graph for all classes...");
         for (ClassDoc node: root.classes()) {
             addNode(node, true);
         }
@@ -150,37 +149,7 @@ public class ClassDocGraph {
     public String getOverviewSummaryDiagram() {
         Map<String, PackageDoc> packages = new TreeMap<String, PackageDoc>();
         Set<Edge> edgesToRender = new TreeSet<Edge>();
-        for (ClassDoc node: nodes.values()) {
-            if (!node.isIncluded()) {
-                continue;
-            }
-
-            PackageDoc pkg = node.containingPackage();
-            packages.put(pkg.name(), pkg);
-
-            // Generate dependency nodes from known relationships.
-            addPackageDependency(edgesToRender, edges.get(node));
-            addPackageDependency(edgesToRender, reversedEdges.get(node));
-
-            // And then try all fields and parameter types.
-            for (FieldDoc f: node.fields()) {
-                if (f.type().asClassDoc() != null) {
-                    addPackageDependency(edgesToRender, pkg, f.type().asClassDoc().containingPackage());
-                }
-            }
-
-            // And all methods.
-            for (MethodDoc m: node.methods()) {
-                if (m.returnType().asClassDoc() != null) {
-                    addPackageDependency(edgesToRender, pkg, m.returnType().asClassDoc().containingPackage());
-                }
-                for (Parameter p: m.parameters()) {
-                    if (p.type().asClassDoc() != null) {
-                        addPackageDependency(edgesToRender, pkg, p.type().asClassDoc().containingPackage());
-                    }
-                }
-            }
-        }
+        addPackageDependencies(packages, edgesToRender);
 
         // Replace direct dependencies with transitive dependencies
         // if possible to simplify the diagram.
@@ -275,6 +244,52 @@ public class ClassDocGraph {
         buf.append("}" + NEWLINE);
 
         return buf.toString();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void addPackageDependencies(
+            Map<String, PackageDoc> packages, Set<Edge> edgesToRender) {
+
+        for (ClassDoc node: nodes.values()) {
+            if (!node.isIncluded()) {
+                continue;
+            }
+
+            PackageDoc pkg = node.containingPackage();
+            packages.put(pkg.name(), pkg);
+
+            // Generate dependency nodes from known relationships.
+            addPackageDependency(edgesToRender, edges.get(node));
+            addPackageDependency(edgesToRender, reversedEdges.get(node));
+
+            // And then try all fields and parameter types.
+            for (FieldDoc f: node.fields()) {
+                if (f.type().asClassDoc() != null) {
+                    addPackageDependency(edgesToRender, pkg, f.type().asClassDoc().containingPackage());
+                }
+            }
+
+            // And all methods.
+            for (MethodDoc m: node.methods()) {
+                if (m.returnType().asClassDoc() != null) {
+                    addPackageDependency(edgesToRender, pkg, m.returnType().asClassDoc().containingPackage());
+                }
+                for (Parameter p: m.parameters()) {
+                    if (p.type().asClassDoc() != null) {
+                        addPackageDependency(edgesToRender, pkg, p.type().asClassDoc().containingPackage());
+                    }
+                }
+            }
+
+            // This is likely to be removed in the future.. but this is the
+            // most precise way to figure out the dependencies in JavaDoc.
+            for (PackageDoc p: node.importedPackages()) {
+                addPackageDependency(edgesToRender, pkg, p);
+            }
+            for (ClassDoc c: node.importedClasses()) {
+                addPackageDependency(edgesToRender, pkg, c.containingPackage());
+            }
+        }
     }
 
     private static void addPackageDependency(
