@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.Doc;
@@ -315,9 +316,7 @@ public class ClassDocGraph {
         Set<Edge> edgesToRender = new TreeSet<Edge>();
 
         for (ClassDoc node: nodes.values()) {
-            fetchSubgraph(
-                    pkg, node, nodesToRender, edgesToRender,
-                    true, false, false);
+            fetchSubgraph(pkg, node, nodesToRender, edgesToRender, true, false, true);
         }
 
         renderSubgraph(pkg, null, buf, nodesToRender, edgesToRender);
@@ -330,10 +329,16 @@ public class ClassDocGraph {
     private void fetchSubgraph(
             PackageDoc pkg, ClassDoc cls,
             Map<String, ClassDoc> nodesToRender, Set<Edge> edgesToRender,
-            boolean useHidden, boolean useSee, boolean addReversedEdges) {
+            boolean useHidden, boolean useSee, boolean forceInherit) {
 
         if (useHidden && cls.tags(TAG_HIDDEN).length > 0) {
             return;
+        }
+
+        for (Tag t: pkg.tags(TAG_EXCLUDE)) {
+            if (Pattern.compile(t.text().trim()).matcher(cls.qualifiedName()).find()) {
+                return;
+            }
         }
 
         if (cls.containingPackage() == pkg) {
@@ -343,26 +348,98 @@ public class ClassDocGraph {
                 if (!useSee && edge.getType() == SEE_ALSO) {
                     continue;
                 }
-                edgesToRender.add(edge);
+
                 ClassDoc source = (ClassDoc) edge.getSource();
                 ClassDoc target = (ClassDoc) edge.getTarget();
+
+                boolean excluded = false;
+                if (forceInherit || cls.tags(TAG_INHERIT).length > 0) {
+                    for (Tag t: pkg.tags(TAG_EXCLUDE)) {
+                        Pattern p = Pattern.compile(t.text().trim());
+
+                        if (p.matcher(source.qualifiedName()).find()) {
+                            excluded = true;
+                            break;
+                        }
+                        if (p.matcher(target.qualifiedName()).find()) {
+                            excluded = true;
+                            break;
+                        }
+                    }
+                    if (excluded) {
+                        continue;
+                    }
+                }
+
+                for (Tag t: cls.tags(TAG_EXCLUDE)) {
+                    Pattern p = Pattern.compile(t.text().trim());
+
+                    if (p.matcher(source.qualifiedName()).find()) {
+                        excluded = true;
+                        break;
+                    }
+                    if (p.matcher(target.qualifiedName()).find()) {
+                        excluded = true;
+                        break;
+                    }
+                }
+                if (excluded) {
+                    continue;
+                }
+
+                edgesToRender.add(edge);
                 nodesToRender.put(source.qualifiedName(), source);
                 nodesToRender.put(target.qualifiedName(), target);
             }
 
-            if (addReversedEdges) {
-                Set<Edge> reversedDirectEdges = reversedEdges.get(cls);
-                if (reversedDirectEdges != null) {
-                    for (Edge edge: reversedDirectEdges) {
-                        if (!useSee && edge.getType() == SEE_ALSO) {
+            Set<Edge> reversedDirectEdges = reversedEdges.get(cls);
+            if (reversedDirectEdges != null) {
+                for (Edge edge: reversedDirectEdges) {
+                    if (!useSee && edge.getType() == SEE_ALSO) {
+                        continue;
+                    }
+
+                    ClassDoc source = (ClassDoc) edge.getSource();
+                    ClassDoc target = (ClassDoc) edge.getTarget();
+
+                    boolean excluded = false;
+                    if (forceInherit || cls.tags(TAG_INHERIT).length > 0) {
+                        for (Tag t: pkg.tags(TAG_EXCLUDE)) {
+                            Pattern p = Pattern.compile(t.text().trim());
+
+                            if (p.matcher(source.qualifiedName()).find()) {
+                                excluded = true;
+                                break;
+                            }
+                            if (p.matcher(target.qualifiedName()).find()) {
+                                excluded = true;
+                                break;
+                            }
+                        }
+                        if (excluded) {
                             continue;
                         }
-                        edgesToRender.add(edge);
-                        ClassDoc source = (ClassDoc) edge.getSource();
-                        ClassDoc target = (ClassDoc) edge.getTarget();
-                        nodesToRender.put(source.qualifiedName(), source);
-                        nodesToRender.put(target.qualifiedName(), target);
                     }
+
+                    for (Tag t: cls.tags(TAG_EXCLUDE)) {
+                        Pattern p = Pattern.compile(t.text().trim());
+
+                        if (p.matcher(source.qualifiedName()).find()) {
+                            excluded = true;
+                            break;
+                        }
+                        if (p.matcher(target.qualifiedName()).find()) {
+                            excluded = true;
+                            break;
+                        }
+                    }
+                    if (excluded) {
+                        continue;
+                    }
+
+                    edgesToRender.add(edge);
+                    nodesToRender.put(source.qualifiedName(), source);
+                    nodesToRender.put(target.qualifiedName(), target);
                 }
             }
         }
@@ -390,8 +467,7 @@ public class ClassDocGraph {
         Map<String, ClassDoc> nodesToRender = new TreeMap<String, ClassDoc>();
         Set<Edge> edgesToRender = new TreeSet<Edge>();
 
-        fetchSubgraph(
-                pkg, cls, nodesToRender, edgesToRender, false, true, true);
+        fetchSubgraph(pkg, cls, nodesToRender, edgesToRender, false, true, false);
         renderSubgraph(pkg, cls, buf, nodesToRender, edgesToRender);
 
         buf.append("}" + NEWLINE);
