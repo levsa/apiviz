@@ -315,7 +315,9 @@ public class ClassDocGraph {
         Set<Edge> edgesToRender = new TreeSet<Edge>();
 
         for (ClassDoc node: nodes.values()) {
-            fetchSubgraph(pkg, node, nodesToRender, edgesToRender, true);
+            fetchSubgraph(
+                    pkg, node, nodesToRender, edgesToRender,
+                    true, false, false);
         }
 
         renderSubgraph(pkg, null, buf, nodesToRender, edgesToRender);
@@ -327,32 +329,40 @@ public class ClassDocGraph {
 
     private void fetchSubgraph(
             PackageDoc pkg, ClassDoc cls,
-            Map<String, ClassDoc> nodesToRender,
-            Set<Edge> edgesToRender, boolean ignoreHidden) {
+            Map<String, ClassDoc> nodesToRender, Set<Edge> edgesToRender,
+            boolean useHidden, boolean useSee, boolean addReversedEdges) {
 
-        if (ignoreHidden && cls.tags(TAG_HIDDEN).length > 0) {
+        if (useHidden && cls.tags(TAG_HIDDEN).length > 0) {
             return;
         }
 
         if (cls.containingPackage() == pkg) {
             Set<Edge> directEdges = edges.get(cls);
             nodesToRender.put(cls.qualifiedName(), cls);
-            edgesToRender.addAll(directEdges);
-            Set<Edge> reversedDirectEdges = reversedEdges.get(cls);
             for (Edge edge: directEdges) {
+                if (!useSee && edge.getType() == SEE_ALSO) {
+                    continue;
+                }
+                edgesToRender.add(edge);
                 ClassDoc source = (ClassDoc) edge.getSource();
                 ClassDoc target = (ClassDoc) edge.getTarget();
                 nodesToRender.put(source.qualifiedName(), source);
                 nodesToRender.put(target.qualifiedName(), target);
             }
 
-            if (reversedDirectEdges != null) {
-                edgesToRender.addAll(reversedDirectEdges);
-                for (Edge edge: reversedDirectEdges) {
-                    ClassDoc source = (ClassDoc) edge.getSource();
-                    ClassDoc target = (ClassDoc) edge.getTarget();
-                    nodesToRender.put(source.qualifiedName(), source);
-                    nodesToRender.put(target.qualifiedName(), target);
+            if (addReversedEdges) {
+                Set<Edge> reversedDirectEdges = reversedEdges.get(cls);
+                if (reversedDirectEdges != null) {
+                    for (Edge edge: reversedDirectEdges) {
+                        if (!useSee && edge.getType() == SEE_ALSO) {
+                            continue;
+                        }
+                        edgesToRender.add(edge);
+                        ClassDoc source = (ClassDoc) edge.getSource();
+                        ClassDoc target = (ClassDoc) edge.getTarget();
+                        nodesToRender.put(source.qualifiedName(), source);
+                        nodesToRender.put(target.qualifiedName(), target);
+                    }
                 }
             }
         }
@@ -380,7 +390,8 @@ public class ClassDocGraph {
         Map<String, ClassDoc> nodesToRender = new TreeMap<String, ClassDoc>();
         Set<Edge> edgesToRender = new TreeSet<Edge>();
 
-        fetchSubgraph(pkg, cls, nodesToRender, edgesToRender, false);
+        fetchSubgraph(
+                pkg, cls, nodesToRender, edgesToRender, false, true, true);
         renderSubgraph(pkg, cls, buf, nodesToRender, edgesToRender);
 
         buf.append("}" + NEWLINE);
