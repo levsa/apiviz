@@ -159,15 +159,8 @@ public class ClassDocGraph {
             packages.put(pkg.name(), pkg);
 
             // Generate dependency nodes from known relationships.
-            for (Edge edge: edges.get(node)) {
-                if (edge.getType() == SEE_ALSO) {
-                    continue;
-                }
-
-                PackageDoc source = ((ClassDoc) edge.getSource()).containingPackage();
-                PackageDoc target = ((ClassDoc) edge.getTarget()).containingPackage();
-                addPackageDependency(edgesToRender, source, target);
-            }
+            addPackageDependency(edgesToRender, edges.get(node));
+            addPackageDependency(edgesToRender, reversedEdges.get(node));
 
             // And then try all fields and parameter types.
             for (FieldDoc f: node.fields()) {
@@ -209,6 +202,10 @@ public class ClassDocGraph {
             for (Edge edge: edgesToRender) {
                 if (isIndirectlyReachable(dependencies, edge.getSource(), edge.getTarget())) {
                     edgesToRender.remove(edge);
+                    Set<Doc> targets = dependencies.get(edge.getSource());
+                    if (targets != null) {
+                        targets.remove(edge.getTarget());
+                    }
                     break;
                 }
             }
@@ -278,6 +275,21 @@ public class ClassDocGraph {
         buf.append("}" + NEWLINE);
 
         return buf.toString();
+    }
+
+    private static void addPackageDependency(
+            Set<Edge> edgesToRender, Set<Edge> candidates) {
+        if (candidates == null) {
+            return;
+        }
+        for (Edge edge: candidates) {
+            if (edge.getType() == SEE_ALSO) {
+                continue;
+            }
+            PackageDoc source = ((ClassDoc) edge.getSource()).containingPackage();
+            PackageDoc target = ((ClassDoc) edge.getTarget()).containingPackage();
+            addPackageDependency(edgesToRender, source, target);
+        }
     }
 
     private static void addPackageDependency(
