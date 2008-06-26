@@ -49,10 +49,11 @@
       <dependency>
         <groupId>com.sun.jdk</groupId>
         <artifactId>jdk-tools</artifactId>
-        <version>1.6.0.05</version>
+        <version>1.5</version>
         <scope>system</scope>
         <systemPath>${java.home}/../lib/tools.jar</systemPath>
       </dependency>
+
       <!-- Testing -->
       <dependency>
         <groupId>junit</groupId>
@@ -66,7 +67,6 @@
     <dependency>
       <groupId>com.sun.jdk</groupId>
       <artifactId>jdk-tools</artifactId>
-      <version>1.6.0.05</version>
     </dependency>
     
     <!-- Testing -->
@@ -154,7 +154,6 @@
             <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
           </links>
           <locale>en_US</locale>
-          <excludePackageNames>${project.groupId}.example*:${project.groupId}.util*</excludePackageNames>
         </configuration>
       </plugin>
       <plugin>
