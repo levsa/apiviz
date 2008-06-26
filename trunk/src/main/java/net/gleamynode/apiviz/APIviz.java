@@ -60,10 +60,7 @@ public class APIviz {
 
         try {
             File outputDirectory = getOutputDirectory(root.options());
-
-            root.printNotice("Building graph for all classes...");
             ClassDocGraph graph = new ClassDocGraph(root);
-
             generateOverviewSummary(root, graph, outputDirectory);
             generatePackageSummaries(root, graph, outputDirectory);
             generateClassDiagrams(root, graph, outputDirectory);
