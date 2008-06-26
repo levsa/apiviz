@@ -134,17 +134,21 @@ public class APIviz {
         if (!htmlFile.exists()) {
             // May be an inner class?
             File initialGuess = htmlFile;
-            int idx = filename.lastIndexOf(File.separatorChar);
-            if (idx > 0) {
-                filename = filename.substring(0, idx) + '.' +
-                           filename.substring(idx + 1);
+            for (;;) {
+                int idx = filename.lastIndexOf(File.separatorChar);
+                if (idx > 0) {
+                    filename = filename.substring(0, idx) + '.' +
+                               filename.substring(idx + 1);
+                } else {
+                    throw new FileNotFoundException("File not found: " + initialGuess);
+                }
+                htmlFile = new File(outputDirectory, filename + ".html");
+                if (htmlFile.exists()) {
+                    pngFile = new File(outputDirectory, filename + ".png");
+                    mapFile = new File(outputDirectory, filename + ".map");
+                    break;
+                }
             }
-            htmlFile = new File(outputDirectory, filename + ".html");
-            if (!htmlFile.exists()) {
-                throw new FileNotFoundException("File not found: " + initialGuess);
-            }
-            pngFile = new File(outputDirectory, filename + ".png");
-            mapFile = new File(outputDirectory, filename + ".map");
         }
 
         root.printNotice("Generating " + pngFile + "...");
