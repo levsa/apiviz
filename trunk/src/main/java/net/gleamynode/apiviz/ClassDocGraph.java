@@ -214,6 +214,43 @@ public class ClassDocGraph {
             }
         }
 
+        // Get the least common prefix to compact the diagram even further.
+        int minPackageNameLen = Integer.MAX_VALUE;
+        int maxPackageNameLen = Integer.MIN_VALUE;
+        for (String pname: packages.keySet()) {
+            if (pname.length() > maxPackageNameLen) {
+                maxPackageNameLen = pname.length();
+            }
+            if (pname.length() < minPackageNameLen) {
+                minPackageNameLen = pname.length();
+            }
+        }
+
+        if (minPackageNameLen == 0) {
+            throw new IllegalStateException("Unexpected empty package name");
+        }
+
+        int prefixLen;
+        String firstPackageName = packages.keySet().iterator().next();
+        for (prefixLen = minPackageNameLen; prefixLen > 0; prefixLen --) {
+            if (firstPackageName.charAt(prefixLen - 1) != '.') {
+                continue;
+            }
+
+            String candidatePrefix = firstPackageName.substring(0, prefixLen);
+            boolean found = true;
+            for (String pname: packages.keySet()) {
+                if (!pname.startsWith(candidatePrefix)) {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found) {
+                break;
+            }
+        }
+
         StringBuilder buf = new StringBuilder(16384);
         buf.append(
                 "digraph APIVIZ {" + NEWLINE +
@@ -231,7 +268,7 @@ public class ClassDocGraph {
                 "width=0.1, height=0.1, style=\"setlinewidth(0.6)\"]; " + NEWLINE);
 
         for (PackageDoc pkg: packages.values()) {
-            renderPackage(buf, pkg);
+            renderPackage(buf, pkg, prefixLen);
         }
 
         for (Edge edge: edgesToRender) {
@@ -487,11 +524,13 @@ public class ClassDocGraph {
         }
     }
 
-    private static void renderPackage(StringBuilder buf, PackageDoc pkg) {
+    private static void renderPackage(
+            StringBuilder buf, PackageDoc pkg, int prefixLen) {
+
         String href = pkg.name().replace('.', '/') + "/package-summary.html";
         buf.append(getNodeId(pkg));
         buf.append(" [label=\"");
-        buf.append(pkg.name());
+        buf.append(pkg.name().substring(prefixLen));
         buf.append("\", style=\"filled\", fillcolor=\"");
         buf.append(getFillColor(pkg));
         buf.append("\", href=\"");
