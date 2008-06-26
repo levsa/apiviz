@@ -34,13 +34,12 @@ public class Constant {
 
     // TODO change relationship spec to edgelabel sourcelabel targetlabel
     // TODO Split apiviz.has into two tags
-    // TODO Exclusion expression for package-summary.html and class
 
     /* apiviz.stereotype <name> */
     public static final String TAG_STEREOTYPE = TAG_PREFIX + "stereotype";
     /* apiviz.uses       <FQCN> [<sourceLabel> <targetLabel> [<edgeLabel>]] */
     public static final String TAG_USES = TAG_PREFIX + "uses";
-    /* apiviz.has        <FQCN> [<sourceLabel> <targetLabel> [<edgeLabel>]] [oneway] */
+    /* apiviz.has        <FQCN> [oneway] [<sourceLabel> <targetLabel> [<edgeLabel>]] */
     public static final String TAG_HAS = TAG_PREFIX + "has";
     /* apiviz.owns       <FQCN> [<sourceLabel> <targetLabel> [<edgeLabel>]] */
     public static final String TAG_OWNS = TAG_PREFIX + "owns";
