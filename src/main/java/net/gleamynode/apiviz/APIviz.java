@@ -20,6 +20,7 @@ package net.gleamynode.apiviz;
 import static net.gleamynode.apiviz.Constant.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
@@ -59,6 +60,8 @@ public class APIviz {
 
         try {
             File outputDirectory = getOutputDirectory(root.options());
+
+            root.printNotice("Building graph for all classes...");
             ClassDocGraph graph = new ClassDocGraph(root);
 
             generateOverviewSummary(root, graph, outputDirectory);
@@ -127,6 +130,22 @@ public class APIviz {
         File htmlFile = new File(outputDirectory, filename + ".html");
         File pngFile = new File(outputDirectory, filename + ".png");
         File mapFile = new File(outputDirectory, filename + ".map");
+
+        if (!htmlFile.exists()) {
+            // May be an inner class?
+            File initialGuess = htmlFile;
+            int idx = filename.lastIndexOf(File.separatorChar);
+            if (idx > 0) {
+                filename = filename.substring(0, idx) + '.' +
+                           filename.substring(idx + 1);
+            }
+            htmlFile = new File(outputDirectory, filename + ".html");
+            if (!htmlFile.exists()) {
+                throw new FileNotFoundException("File not found: " + initialGuess);
+            }
+            pngFile = new File(outputDirectory, filename + ".png");
+            mapFile = new File(outputDirectory, filename + ".map");
+        }
 
         root.printNotice("Generating " + pngFile + "...");
         Graphviz.writeImageAndMap(diagram, outputDirectory, filename);
