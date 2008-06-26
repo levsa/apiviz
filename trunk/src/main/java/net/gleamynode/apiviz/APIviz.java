@@ -40,13 +40,13 @@ import com.sun.tools.doclets.standard.Standard;
  * @version $Rev$, $Date$
  *
  */
-public class ApiVizDoclet {
+public class APIviz {
 
     private static final Pattern INSERTION_POINT_PATTERN = Pattern.compile(
             "((<\\/PRE>)(?=\\s*<P>)|(?=<TABLE BORDER=\"1\"))");
 
     public static boolean start(RootDoc root) {
-        root = new ApiVizRootDoc(root);
+        root = new APIvizRootDoc(root);
         if (!Standard.start(root)) {
             return false;
         }
