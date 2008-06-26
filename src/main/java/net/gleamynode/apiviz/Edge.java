@@ -17,6 +17,7 @@
  */
 package net.gleamynode.apiviz;
 
+import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.Doc;
 import com.sun.javadoc.RootDoc;
 
@@ -27,17 +28,54 @@ import com.sun.javadoc.RootDoc;
  * @version $Rev$, $Date$
  *
  */
-public class Relationship {
+public class Edge implements Comparable<Edge> {
+    private final EdgeType type;
+    private final Doc source;
     private final Doc target;
     private final String sourceLabel;
     private final String targetLabel;
     private final String edgeLabel;
     private final boolean oneway;
+    private final int hashCode;
 
-    public Relationship(RootDoc rootDoc, String spec) {
+    public Edge(EdgeType type, Doc source, Doc target) {
+        this.type = type;
+        this.source = source;
+        this.target = target;
+        sourceLabel = "";
+        targetLabel = "";
+        edgeLabel = "";
+        oneway = true;
+        hashCode = calculateHashCode();
+    }
+
+    private int calculateHashCode(){
+        return ((((((oneway ? 31 : 0) + type.hashCode()) * 31 + getSourceName().hashCode()) * 31 + getTargetName().hashCode()) * 31 + sourceLabel.hashCode()) * 31 + targetLabel.hashCode()) * 31 + edgeLabel.hashCode();
+    }
+
+    private String getSourceName() {
+        if (source instanceof ClassDoc) {
+            return ((ClassDoc) source).qualifiedName();
+        } else {
+            return source.name();
+        }
+    }
+
+    private String getTargetName() {
+        if (target instanceof ClassDoc) {
+            return ((ClassDoc) target).qualifiedName();
+        } else {
+            return target.name();
+        }
+    }
+
+    public Edge(RootDoc rootDoc, EdgeType type, Doc source, String spec) {
         if (spec == null) {
             spec = "";
         }
+
+        this.type = type;
+        this.source = source;
 
         String[] args = spec.replaceAll("\\s+", " ").trim().split(" ");
         for (int i = 1; i < Math.min(4, args.length); i ++) {
@@ -82,6 +120,16 @@ public class Relationship {
                     "Invalid relationship syntax: " + spec +
                     " (Unknown package or class name)");
         }
+
+        hashCode = calculateHashCode();
+    }
+
+    public EdgeType getType() {
+        return type;
+    }
+
+    public Doc getSource() {
+        return source;
     }
 
     public Doc getTarget() {
@@ -102,5 +150,65 @@ public class Relationship {
 
     public boolean isOneway() {
         return oneway;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof Edge)) {
+            return false;
+        }
+
+        Edge that = (Edge) o;
+        return type == that.type && oneway == that.oneway &&
+               source == that.source && target == that.target &&
+               edgeLabel.equals(that.edgeLabel) &&
+               sourceLabel.equals(that.sourceLabel) &&
+               targetLabel.equals(that.targetLabel);
+    }
+
+    public int compareTo(Edge that) {
+        int v;
+
+        v = type.compareTo(that.type);
+        if (v != 0) {
+            return v;
+        }
+
+        v = getSourceName().compareTo(that.getSourceName());
+        if (v != 0) {
+            return v;
+        }
+
+        v = getTargetName().compareTo(that.getTargetName());
+        if (v != 0) {
+            return v;
+        }
+
+        v = Boolean.valueOf(oneway).compareTo(Boolean.valueOf(that.oneway));
+        if (v != 0) {
+            return v;
+        }
+
+        v = edgeLabel.compareTo(that.edgeLabel);
+        if (v != 0) {
+            return v;
+        }
+
+        v = sourceLabel.compareTo(that.sourceLabel);
+        if (v != 0) {
+            return v;
+        }
+
+        v = targetLabel.compareTo(that.targetLabel);
+        return v;
     }
 }

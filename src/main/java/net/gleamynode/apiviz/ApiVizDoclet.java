@@ -19,14 +19,12 @@ package net.gleamynode.apiviz;
 
 import static net.gleamynode.apiviz.Constant.*;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.DocErrorReporter;
@@ -44,14 +42,19 @@ import com.sun.tools.doclets.standard.Standard;
  */
 public class ApiVizDoclet {
 
+    private static final Pattern INSERTION_POINT_PATTERN = Pattern.compile(
+            "((<\\/PRE>)(?=\\s*<P>)|(?=<TABLE BORDER=\"1\"))");
+
     public static boolean start(RootDoc root) {
+        root = new ApiVizRootDoc(root);
         Standard.start(root);
         try {
             File outputDirectory = getOutputDirectory(root.options());
+            ClassDocGraph graph = new ClassDocGraph(root);
 
-            generateOverviewSummary(root, outputDirectory);
-            generatePackageSummaries(root, outputDirectory);
-            generateClassDiagrams(root, outputDirectory);
+            generateOverviewSummary(root, graph, outputDirectory);
+            generatePackageSummaries(root, graph, outputDirectory);
+            generateClassDiagrams(root, graph, outputDirectory);
         } catch(Throwable t) {
             root.printError("An error occurred during diagram generation:" + t.toString());
             t.printStackTrace();
@@ -72,49 +75,29 @@ public class ApiVizDoclet {
         return Standard.languageVersion();
     }
 
-    private static void generateOverviewSummary(RootDoc root, File outputDirectory) throws IOException {
-        DiagramBuilder builder = new DiagramBuilder(root);
+    private static void generateOverviewSummary(RootDoc root, ClassDocGraph graph, File outputDirectory) throws IOException {
+        instrumentDiagram(
+                root, outputDirectory, "overview-summary",
+                graph.getOverviewSummaryDiagram());
+    }
+
+    private static void generatePackageSummaries(RootDoc root, ClassDocGraph graph, File outputDirectory) throws IOException {
         for (PackageDoc p: getPackages(root).values()) {
-            builder.addPackage(p);
-        }
-        instrumentDiagram(root, outputDirectory, "overview-summary", builder.toString());
-    }
-
-    private static void generatePackageSummaries(RootDoc root, File outputDirectory) throws IOException {
-        for (PackageDoc p: getPackages(root).values()) {
-            generatePackageSummary(root, p, outputDirectory);
+            instrumentDiagram(
+                    root, outputDirectory,
+                    p.name().replace('.', File.separatorChar) +
+                    File.separatorChar + "package-summary",
+                    graph.getPackageSummaryDiagram(p));
         }
     }
 
-    private static void generatePackageSummary(RootDoc root, PackageDoc p, File outputDirectory) throws IOException {
-        DiagramBuilder builder = new DiagramBuilder(root, p);
-        for (ClassDoc c: p.allClasses()) {
-            if (c.tags(TAG_HIDDEN).length < 0) {
-                continue;
-            }
-
-            builder.addClass(c);
+    private static void generateClassDiagrams(RootDoc root, ClassDocGraph graph, File outputDirectory) throws IOException {
+        for (ClassDoc c: root.classes()) {
+            instrumentDiagram(
+                    root, outputDirectory,
+                    c.qualifiedName().replace('.', File.separatorChar),
+                    graph.getClassDiagram(c));
         }
-
-        instrumentDiagram(root, outputDirectory, p.name().replace('.', File.separatorChar) + File.separatorChar + "package-summary", builder.toString());
-    }
-
-    private static void generateClassDiagrams(RootDoc root, File outputDirectory) throws IOException {
-        for (PackageDoc p: getPackages(root).values()) {
-            for (ClassDoc c: p.allClasses()) {
-                generateClassDiagram(root, p, c, outputDirectory);
-            }
-        }
-    }
-
-    private static void generateClassDiagram(RootDoc root, PackageDoc p, ClassDoc c, File outputDirectory) throws IOException {
-        DiagramBuilder builder = new DiagramBuilder(root, p);
-        builder.setUseLandscapeView(false);
-        builder.setUseAutoLandmark(false);
-        builder.setUseSeeTags(true);
-        builder.addClass(c);
-        builder.addLandmark(c);
-        instrumentDiagram(root, outputDirectory, c.qualifiedName().replace('.', '/'), builder.toString());
     }
 
     private static Map<String, PackageDoc> getPackages(RootDoc root) {
@@ -130,62 +113,32 @@ public class ApiVizDoclet {
     }
 
     private static void instrumentDiagram(RootDoc root, File outputDirectory, String filename, String diagram) throws IOException {
-        File outFile = new File(outputDirectory, filename + ".png");
+        File htmlFile = new File(outputDirectory, filename + ".html");
+        File pngFile = new File(outputDirectory, filename + ".png");
+        File mapFile = new File(outputDirectory, filename + ".map");
 
-        root.printNotice("Generating " + outFile + "...");
-        Process p = Runtime.getRuntime().exec(new String [] {
-            "dot",
-            "-Tpng",
-            "-o",
-            outFile.getAbsolutePath(),
-        });
-
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(p.getOutputStream(), "UTF-8"));
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+        root.printNotice("Generating " + pngFile + "...");
+        Graphviz.writeImageAndMap(diagram, outputDirectory, filename);
 
         try {
-            writer.write(diagram);
-            writer.write(Constant.NEWLINE);
-            writer.flush();
-            writer.close();
-            writer = null;
+            String oldContent = FileUtil.readFile(htmlFile);
+            String mapContent = FileUtil.readFile(mapFile);
 
-            String line = null;
-            while((line = reader.readLine()) != null) {
-                root.printWarning(line);
+            Matcher matcher = INSERTION_POINT_PATTERN.matcher(oldContent);
+            if (!matcher.find()) {
+                throw new IllegalStateException(
+                        "Failed to find an insertion point.");
             }
+            String newContent =
+                oldContent.substring(0, matcher.end()) +
+                mapContent + NEWLINE +
+                "<CENTER><IMG SRC=\"" + pngFile.getName() +
+                "\" USEMAP=\"#APIVIZ\" BORDER=\"0\"></CENTER>" +
+                NEWLINE + NEWLINE +
+                oldContent.substring(matcher.end());
+            FileUtil.writeFile(htmlFile, newContent);
         } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    // Shouldn't happen.
-                }
-            }
-
-            try {
-                reader.close();
-            } catch (IOException e) {
-                // Shouldn't happen.
-            }
-
-            try {
-                p.getInputStream().close();
-            } catch (IOException e) {
-                // Shouldn't happen.
-            }
-
-            for (;;) {
-                try {
-                    int result = p.waitFor();
-                    if (result != 0) {
-                        root.printWarning("Graphviz exited with a non-zero return value: " + result);
-                    }
-                    break;
-                } catch (InterruptedException e) {
-                    // Ignore
-                }
-            }
+            mapFile.delete();
         }
     }
 
