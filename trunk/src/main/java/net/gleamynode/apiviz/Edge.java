@@ -92,24 +92,35 @@ public class Edge implements Comparable<Edge> {
             oneway = true;
         } else if (args.length >= 3) {
             target = rootDoc.classNamed(args[0]);
-            sourceLabel = args[1];
-            targetLabel = args[2];
-            if (args.length > 3 && args[args.length -1].equalsIgnoreCase("oneway")) {
-                oneway = true;
+            if (args.length > 3) {
+                int startIndex;
+                if (args[1].equalsIgnoreCase("oneway")) {
+                    oneway = true;
+                    sourceLabel = args[2];
+                    targetLabel = args[3];
+                    startIndex = 4;
+                } else {
+                    oneway = false;
+                    sourceLabel = args[1];
+                    targetLabel = args[2];
+                    startIndex = 3;
+                }
+
                 StringBuilder buf = new StringBuilder();
-                for (int i = 3; i < args.length - 1; i ++) {
+                for (int i = startIndex; i < args.length; i ++) {
                     buf.append(' ');
                     buf.append(args[i]);
                 }
-                edgeLabel = buf.substring(1);
+                if (buf.length() == 0) {
+                    edgeLabel = "";
+                } else {
+                    edgeLabel = buf.substring(1);
+                }
             } else {
                 oneway = false;
-                StringBuilder buf = new StringBuilder();
-                for (int i = 3; i < args.length; i ++) {
-                    buf.append(' ');
-                    buf.append(args[i]);
-                }
-                edgeLabel = buf.substring(1);
+                sourceLabel = args[1];
+                targetLabel = args[2];
+                edgeLabel = "";
             }
         } else {
             throw new IllegalArgumentException("Invalid relationship syntax: " + spec);
