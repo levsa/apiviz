@@ -27,8 +27,14 @@ package net.gleamynode.apiviz;
 public class Constant {
 
     public static final String NEWLINE = System.getProperty("line.separator", "\n");
+    public static final String NORMAL_FONT;
+    public static final String ITALIC_FONT;
 
     public static final String TAG_PREFIX = "@apiviz.";
+
+    // TODO change relationship spec to edgelabel sourcelabel targetlabel
+    // TODO Split apiviz.has into two tags
+    // TODO Exclusion expression for package-summary.html and class
 
     /* apiviz.stereotype <name> */
     public static final String TAG_STEREOTYPE = TAG_PREFIX + "stereotype";
@@ -42,10 +48,18 @@ public class Constant {
     public static final String TAG_COMPOSED_OF = TAG_PREFIX + "composedOf";
     /* apiviz.landmark */
     public static final String TAG_LANDMARK = TAG_PREFIX + "landmark";
-    /* apiviz.group <groupId> */
-    public static final String TAG_GROUP = TAG_PREFIX + "group";
     /* apiviz.hidden */
     public static final String TAG_HIDDEN = TAG_PREFIX + "hidden";
+
+    static {
+        if(System.getProperty("os.name").toLowerCase().contains("windows")) {
+            NORMAL_FONT = "arial";
+            ITALIC_FONT = "ariali";
+        } else {
+            NORMAL_FONT = "Helvetica";
+            ITALIC_FONT = "Helvetica-Oblique";
+        }
+    }
 
     private Constant() {
         // Unused
