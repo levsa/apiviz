@@ -283,11 +283,27 @@ public class ClassDocGraph {
 
             // This is likely to be removed in the future.. but this is the
             // most precise way to figure out the dependencies in JavaDoc.
-            for (PackageDoc p: node.importedPackages()) {
-                addPackageDependency(edgesToRender, pkg, p);
+            PackageDoc[] importedPackages;
+            try {
+                importedPackages = node.importedPackages();
+            } catch (Exception e) {
+                importedPackages = null;
             }
-            for (ClassDoc c: node.importedClasses()) {
-                addPackageDependency(edgesToRender, pkg, c.containingPackage());
+            if (importedPackages != null) {
+                for (PackageDoc p: importedPackages) {
+                    addPackageDependency(edgesToRender, pkg, p);
+                }
+            }
+            ClassDoc[] importedClasses;
+            try {
+                importedClasses = node.importedClasses();
+            } catch (Exception e) {
+                importedClasses = null;
+            }
+            if (importedClasses != null) {
+                for (ClassDoc c: importedClasses) {
+                    addPackageDependency(edgesToRender, pkg, c.containingPackage());
+                }
             }
         }
     }
