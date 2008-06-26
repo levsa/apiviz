@@ -33,11 +33,11 @@ import com.sun.javadoc.Tag;
  * @version $Rev$, $Date$
  *
  */
-public class ApiVizRootDoc implements RootDoc {
+public class APIvizRootDoc implements RootDoc {
 
     private final RootDoc root;
 
-    public ApiVizRootDoc(RootDoc root) {
+    public APIvizRootDoc(RootDoc root) {
         this.root = root;
     }
 
