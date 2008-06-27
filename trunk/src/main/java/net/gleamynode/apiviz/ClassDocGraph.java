@@ -637,7 +637,7 @@ public class ClassDocGraph {
         buf.append(getNodeId(edge.getTarget()));
         buf.append(" [arrowhead=\"");
         buf.append(type.getArrowHead() == null? (edge.isOneway()? "open" : "none") : type.getArrowHead());
-        buf.append("\", arrowTail=\"");
+        buf.append("\", arrowtail=\"");
         buf.append(type.getArrowTail());
         buf.append("\", style=\"" + type.getStyle());
         buf.append("\", color=\"");
