@@ -641,11 +641,11 @@ public class ClassDocGraph {
         buf.append("\", fontcolor=\"");
         buf.append(fontColor);
         buf.append("\", label=\"");
-        buf.append(edge.getEdgeLabel());
+        buf.append(escape(edge.getEdgeLabel()));
         buf.append("\", headlabel=\"");
-        buf.append(edge.getTargetLabel());
+        buf.append(escape(edge.getTargetLabel()));
         buf.append("\", taillabel=\"");
-        buf.append(edge.getSourceLabel());
+        buf.append(escape(edge.getSourceLabel()));
         buf.append("\" ];");
         buf.append(NEWLINE);
     }
