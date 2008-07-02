@@ -587,7 +587,6 @@ public class ClassDocGraph {
     }
 
     private static void renderClass(PackageDoc pkg, ClassDoc cls, StringBuilder buf, ClassDoc node) {
-        String stereotype = getStereotype(node);
         String fillColor = getFillColor(pkg, cls, node);
         String lineColor = getLineColor(pkg, node);
         String fontColor = getFontColor(pkg, node);
@@ -595,12 +594,9 @@ public class ClassDocGraph {
 
         buf.append(getNodeId(node));
         buf.append(" [label=\"");
-        if (stereotype != null) {
-            buf.append("&#171;");
-            buf.append(stereotype);
-            buf.append("&#187;\\n");
-        }
         buf.append(getNodeLabel(pkg, node));
+        buf.append("\", tooltip=\"");
+        buf.append(escape(getNodeLabel(pkg, node)));
         buf.append("\"");
         if (node.isAbstract() && !node.isInterface()) {
             buf.append(", fontname=\"");
@@ -684,7 +680,7 @@ public class ClassDocGraph {
             stereotype = node.tags(TAG_STEREOTYPE)[0].text();
         }
 
-        return stereotype;
+        return escape(stereotype);
     }
 
     private static String getFillColor(PackageDoc pkg) {
@@ -750,18 +746,38 @@ public class ClassDocGraph {
     }
 
     private static String getNodeLabel(PackageDoc pkg, ClassDoc node) {
-        if (node.containingPackage() == pkg) {
-            return node.name();
+        StringBuilder buf = new StringBuilder(256);
+        String stereotype = getStereotype(node);
+        if (stereotype != null) {
+            buf.append("&#171;");
+            buf.append(stereotype);
+            buf.append("&#187;\\n");
         }
 
-        String name = node.qualifiedName();
-        int dotIndex = name.lastIndexOf('.');
-        if (dotIndex < 0) {
-            return name;
+        if (node.containingPackage() == pkg) {
+            buf.append(node.name());
         } else {
-            return name.substring(dotIndex + 1) + "\\n(" +
-                   name.substring(0, dotIndex) + ')';
+            String name = node.qualifiedName();
+            int dotIndex = name.lastIndexOf('.');
+            if (dotIndex < 0) {
+                buf.append(name);
+            } else {
+                buf.append(name.substring(dotIndex + 1));
+                buf.append("\\n(");
+                buf.append(name.substring(0, dotIndex));
+                buf.append(')');
+            }
         }
+        return buf.toString();
+    }
+
+    private static String escape(String text) {
+        // Escape some characters to prevent syntax errors.
+        if (text != null) {
+            text = text.replaceAll("" +
+            		"(\"|'|\\\\.?|\\s)+", " ");
+        }
+        return text;
     }
 
     private static String getPath(PackageDoc pkg, ClassDoc node) {
