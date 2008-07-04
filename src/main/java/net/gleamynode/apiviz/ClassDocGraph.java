@@ -220,7 +220,7 @@ public class ClassDocGraph {
         StringBuilder buf = new StringBuilder(16384);
         buf.append(
                 "digraph APIVIZ {" + NEWLINE +
-                "rankdir=RL;" + NEWLINE +
+                "rankdir=LR;" + NEWLINE +
                 "ranksep=0.3;" + NEWLINE +
                 "nodesep=0.3;" + NEWLINE +
                 "mclimit=128;" + NEWLINE +
@@ -379,7 +379,7 @@ public class ClassDocGraph {
         StringBuilder buf = new StringBuilder(16384);
         buf.append(
                 "digraph APIVIZ {" + NEWLINE +
-                "rankdir=RL;" + NEWLINE +
+                "rankdir=LR;" + NEWLINE +
                 "ranksep=0.3;" + NEWLINE +
                 "nodesep=0.3;" + NEWLINE +
                 "mclimit=1024;" + NEWLINE +
@@ -531,7 +531,7 @@ public class ClassDocGraph {
         StringBuilder buf = new StringBuilder(16384);
         buf.append(
                 "digraph APIVIZ {" + NEWLINE +
-                "rankdir=BT;" + NEWLINE +
+                "rankdir=TB;" + NEWLINE +
                 "ranksep=0.3;" + NEWLINE +
                 "nodesep=0.3;" + NEWLINE +
                 "mclimit=128;" + NEWLINE +
@@ -555,7 +555,7 @@ public class ClassDocGraph {
         return buf.toString();
     }
 
-    private static void renderSubgraph(PackageDoc pkg, ClassDoc cls,
+    private void renderSubgraph(PackageDoc pkg, ClassDoc cls,
             StringBuilder buf, Map<String, ClassDoc> nodesToRender,
             Set<Edge> edgesToRender) {
         for (ClassDoc node: nodesToRender.values()) {
@@ -623,18 +623,56 @@ public class ClassDocGraph {
         buf.append(NEWLINE);
     }
 
-    private static void renderEdge(PackageDoc pkg, StringBuilder buf, Edge edge) {
+    private void renderEdge(PackageDoc pkg, StringBuilder buf, Edge edge) {
         EdgeType type = edge.getType();
         String lineColor = getLineColor(pkg, edge);
         String fontColor = getFontColor(pkg, edge);
 
-        buf.append(getNodeId(edge.getSource()));
-        buf.append(" -> ");
-        buf.append(getNodeId(edge.getTarget()));
-        buf.append(" [arrowhead=\"");
-        buf.append(type.getArrowHead() == null? (edge.isOneway()? "open" : "none") : type.getArrowHead());
-        buf.append("\", arrowtail=\"");
-        buf.append(type.getArrowTail());
+        // Graphviz lays out nodes upside down - adjust for
+        // important relationships.
+        boolean reverse = false;
+        switch (edge.getType()) {
+        case GENERALIZATION:
+        case REALIZATION:
+        case DEPENDENCY:
+            reverse = true;
+        }
+
+        // It should be reversed if only one important
+        // relationship is found, otherwise, class hierarchy
+        // will look cluttered.
+        if (!reverse) {
+            Set<Edge> allEdges = edges.get(edge.getSource());
+            if (allEdges != null) {
+                for (Edge e: allEdges) {
+                    switch (e.getType()) {
+                    case GENERALIZATION:
+                    case REALIZATION:
+                    case DEPENDENCY:
+                        reverse = true;
+                    }
+                }
+            }
+        }
+
+        if (reverse) {
+            buf.append(getNodeId(edge.getTarget()));
+            buf.append(" -> ");
+            buf.append(getNodeId(edge.getSource()));
+            buf.append(" [arrowhead=\"");
+            buf.append(type.getArrowTail());
+            buf.append("\", arrowtail=\"");
+            buf.append(type.getArrowHead() == null? (edge.isOneway()? "open" : "none") : type.getArrowHead());
+        } else {
+            buf.append(getNodeId(edge.getSource()));
+            buf.append(" -> ");
+            buf.append(getNodeId(edge.getTarget()));
+            buf.append(" [arrowhead=\"");
+            buf.append(type.getArrowHead() == null? (edge.isOneway()? "open" : "none") : type.getArrowHead());
+            buf.append("\", arrowtail=\"");
+            buf.append(type.getArrowTail());
+        }
+
         buf.append("\", style=\"" + type.getStyle());
         buf.append("\", color=\"");
         buf.append(lineColor);
