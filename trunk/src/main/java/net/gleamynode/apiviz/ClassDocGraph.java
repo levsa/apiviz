@@ -415,9 +415,11 @@ public class ClassDocGraph {
             return;
         }
 
-        for (Tag t: pkg.tags(TAG_EXCLUDE)) {
-            if (Pattern.compile(t.text().trim()).matcher(cls.qualifiedName()).find()) {
-                return;
+        if (forceInherit) {
+            for (Tag t: pkg.tags(TAG_EXCLUDE)) {
+                if (Pattern.compile(t.text().trim()).matcher(cls.qualifiedName()).find()) {
+                    return;
+                }
             }
         }
 
@@ -467,9 +469,15 @@ public class ClassDocGraph {
                     continue;
                 }
 
-                edgesToRender.add(edge);
-                nodesToRender.put(source.qualifiedName(), source);
-                nodesToRender.put(target.qualifiedName(), target);
+                if (!useHidden || source.tags(TAG_HIDDEN).length == 0 && target.tags(TAG_HIDDEN).length == 0) {
+                    edgesToRender.add(edge);
+                }
+                if (!useHidden || source.tags(TAG_HIDDEN).length == 0) {
+                    nodesToRender.put(source.qualifiedName(), source);
+                }
+                if (!useHidden || target.tags(TAG_HIDDEN).length == 0) {
+                    nodesToRender.put(target.qualifiedName(), target);
+                }
             }
 
             Set<Edge> reversedDirectEdges = reversedEdges.get(cls);
@@ -517,9 +525,15 @@ public class ClassDocGraph {
                         continue;
                     }
 
-                    edgesToRender.add(edge);
-                    nodesToRender.put(source.qualifiedName(), source);
-                    nodesToRender.put(target.qualifiedName(), target);
+                    if (!useHidden || source.tags(TAG_HIDDEN).length == 0 && target.tags(TAG_HIDDEN).length == 0) {
+                        edgesToRender.add(edge);
+                    }
+                    if (!useHidden || source.tags(TAG_HIDDEN).length == 0) {
+                        nodesToRender.put(source.qualifiedName(), source);
+                    }
+                    if (!useHidden || target.tags(TAG_HIDDEN).length == 0) {
+                        nodesToRender.put(target.qualifiedName(), target);
+                    }
                 }
             }
         }
