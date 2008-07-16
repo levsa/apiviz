@@ -35,8 +35,16 @@ import java.io.Writer;
 public class Graphviz {
 
     public static boolean isAvailable() {
-        ProcessBuilder pb = new ProcessBuilder("dot", "-V");
+        String executable = Graphviz.getExecutable();
+        File home = Graphviz.getHome();
+
+        ProcessBuilder pb = new ProcessBuilder(executable, "-V");
         pb.redirectErrorStream(true);
+        if (home != null) {
+            System.out.println("Graphviz Home: " + home);
+            pb.directory(home);
+        }
+        System.out.println("Graphviz Executable: " + executable);
 
         Process p;
         try {
@@ -94,10 +102,14 @@ public class Graphviz {
         mapFile.delete();
 
         ProcessBuilder pb = new ProcessBuilder(
-                "dot",
+                Graphviz.getExecutable(),
                 "-Tcmapx", "-o", mapFile.getAbsolutePath(),
                 "-Tpng",   "-o", pngFile.getAbsolutePath());
         pb.redirectErrorStream(true);
+        File home = Graphviz.getHome();
+        if (home != null) {
+            pb.directory(home);
+        }
 
         Process p = pb.start();
         BufferedReader in = new BufferedReader(
@@ -136,6 +148,42 @@ public class Graphviz {
                 }
             }
         }
+    }
+
+    private static String getExecutable() {
+        String command = "dot";
+
+        try {
+            String osName = System.getProperty("os.name");
+            if (osName != null && osName.indexOf("Windows") >= 0) {
+                File path = Graphviz.getHome();
+                if (path != null) {
+                    command = path.getAbsolutePath() + File.separator
+                            + "dot.exe";
+                } else {
+                    command = "dot.exe";
+                }
+            }
+        } catch (Exception e) {
+            // ignore me!
+        }
+        return command;
+    }
+
+    private static File getHome() {
+        File graphvizDir = null;
+        try {
+            String graphvizHome = System.getProperty("graphviz.home");
+            if (graphvizHome != null) {
+                graphvizDir = new File(graphvizHome);
+                if (!graphvizDir.exists() || !graphvizDir.isDirectory()) {
+                    return null;
+                }
+            }
+        } catch (Exception e) {
+            // ignore...
+        }
+        return graphvizDir;
     }
 
     private Graphviz() {
