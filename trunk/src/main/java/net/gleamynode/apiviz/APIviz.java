@@ -20,7 +20,6 @@ package net.gleamynode.apiviz;
 import static net.gleamynode.apiviz.Constant.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
@@ -137,7 +136,8 @@ public class APIviz {
                     filename = filename.substring(0, idx) + '.' +
                                filename.substring(idx + 1);
                 } else {
-                    throw new FileNotFoundException("File not found: " + initialGuess);
+                    // Give up (maybe missing)
+                    return;
                 }
                 htmlFile = new File(outputDirectory, filename + ".html");
                 if (htmlFile.exists()) {
