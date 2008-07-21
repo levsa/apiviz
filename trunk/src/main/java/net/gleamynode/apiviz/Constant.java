@@ -27,8 +27,8 @@ package net.gleamynode.apiviz;
 public class Constant {
 
     public static final String NEWLINE = System.getProperty("line.separator", "\n");
-    public static final String NORMAL_FONT;
-    public static final String ITALIC_FONT;
+    public static final String NORMAL_FONT = "Helvetica";
+    public static final String ITALIC_FONT = "Helvetica-Oblique";
 
     public static final String TAG_PREFIX = "@apiviz.";
 
@@ -53,16 +53,6 @@ public class Constant {
     public static final String TAG_EXCLUDE = TAG_PREFIX + "exclude";
     /* apiviz.inherit */
     public static final String TAG_INHERIT = TAG_PREFIX + "inherit";
-
-    static {
-        if(System.getProperty("os.name").toLowerCase().contains("windows")) {
-            NORMAL_FONT = "arial";
-            ITALIC_FONT = "ariali";
-        } else {
-            NORMAL_FONT = "Helvetica";
-            ITALIC_FONT = "Helvetica-Oblique";
-        }
-    }
 
     private Constant() {
         // Unused
