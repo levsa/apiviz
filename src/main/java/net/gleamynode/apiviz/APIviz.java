@@ -129,7 +129,6 @@ public class APIviz {
 
         if (!htmlFile.exists()) {
             // May be an inner class?
-            File initialGuess = htmlFile;
             for (;;) {
                 int idx = filename.lastIndexOf(File.separatorChar);
                 if (idx > 0) {
