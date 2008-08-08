@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, 5th Floor, Boston, MA 02110-1301 USA
  */
-package net.gleamynode.apiviz;
+package org.jboss.apiviz;
 
 import java.io.BufferedReader;
 import java.io.File;
