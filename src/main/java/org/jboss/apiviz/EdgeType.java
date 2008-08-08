@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, 5th Floor, Boston, MA 02110-1301 USA
  */
-package net.gleamynode.apiviz;
+package org.jboss.apiviz;
 
 /**
  * @author The APIviz Project (http://apiviz.googlecode.com/)
